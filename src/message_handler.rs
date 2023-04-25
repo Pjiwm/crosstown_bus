@@ -3,18 +3,44 @@ use std::fmt::{self, Debug};
 use std::{error::Error, sync::Arc};
 
 use borsh::{BorshDeserialize, BorshSerialize};
-#[derive(Default, Clone, Debug)]
-pub struct Subscriber<T: Debug> {
+#[derive(Clone, Debug)]
+pub struct Subscriber<T: Debug + Clone> {
     subscribed: RefCell<Option<T>>,
 }
 
-impl<T: Debug> std::fmt::Display for Subscriber<T> {
+impl<T: Debug + Clone> Subscriber<T> {
+    pub fn new() -> Self {
+        Self {
+            subscribed: RefCell::new(None),
+        }
+    }
+
+    pub fn get_subscribed(&self) -> Option<T> {
+        self.subscribed.borrow().clone()
+    }
+}
+
+impl<T: Debug + Clone> std::fmt::Display for Subscriber<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)
     }
 }
 
-impl<T: Debug> MessageHandler<T> for Subscriber<T> {
+impl<T: Debug + Clone> MessageHandler<T> for Subscriber<T> {
+    fn get_handler_action(&self) -> String {
+        String::from(format!("{:?}", self))
+    }
+
+    fn handle(&self, message: Box<T>) -> Result<(), HandleError>
+    where
+        T: Clone + BorshDeserialize + BorshSerialize + 'static,
+    {
+        self.subscribed.replace(Some(*message));
+        Ok(())
+    }
+}
+
+impl<T: Debug + Clone> MessageHandler<T> for Arc<Subscriber<T>> {
     fn get_handler_action(&self) -> String {
         String::from(format!("{:?}", self))
     }
