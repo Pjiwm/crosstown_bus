@@ -1,24 +1,43 @@
-use std::cell::RefCell;
 use std::fmt::{self, Debug};
+use std::sync::Mutex;
 use std::{error::Error, sync::Arc};
 
 use borsh::{BorshDeserialize, BorshSerialize};
-#[derive(Clone, Debug)]
+#[derive(Debug, Clone)]
 pub struct Subscriber<T: Debug + Clone> {
-    subscribed: RefCell<Option<T>>,
+    subscribed: Arc<Mutex<Option<T>>>,
 }
 
 impl<T: Debug + Clone> Subscriber<T> {
     pub fn new() -> Self {
         Self {
-            subscribed: RefCell::new(None),
+            subscribed: Arc::new(Mutex::new(None)),
         }
     }
 
     pub fn get_subscribed(&self) -> Option<T> {
-        self.subscribed.borrow().clone()
+        self.subscribed.lock().unwrap().clone()
     }
 }
+
+// impl<T: Debug + Clone> Clone for Subscriber<T> {
+//     fn clone(&self) -> Self {
+//         let x: T = self.subscribed.into();
+//         x.clone();
+//         Self {
+//             subscribed: Mutex::new()
+//         }
+//     //     if let Ok(clone) = self.subscribed.into() {
+//     //         Self {
+//     //             subscribed: Mutex::new(clone.clone()),
+//     //         }
+//     //     } else {
+//     //         Self {
+//     //             subscribed: Mutex::new(None),
+//     //         }
+//     //     }
+//     // }
+// }
 
 impl<T: Debug + Clone> std::fmt::Display for Subscriber<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -35,8 +54,12 @@ impl<T: Debug + Clone> MessageHandler<T> for Subscriber<T> {
     where
         T: Clone + BorshDeserialize + BorshSerialize + 'static,
     {
-        self.subscribed.replace(Some(*message));
-        Ok(())
+        if let Ok(mut guard) = self.subscribed.try_lock() {
+            guard.replace(*message);
+            Ok(())
+        } else {
+            Err(HandleError::new(String::from("Could not lock mutex"), true))
+        }
     }
 }
 
@@ -49,8 +72,12 @@ impl<T: Debug + Clone> MessageHandler<T> for Arc<Subscriber<T>> {
     where
         T: Clone + BorshDeserialize + BorshSerialize + 'static,
     {
-        self.subscribed.replace(Some(*message));
-        Ok(())
+        if let Ok(mut guard) = self.subscribed.try_lock() {
+            guard.replace(*message);
+            Ok(())
+        } else {
+            Err(HandleError::new(String::from("Could not lock mutex"), true))
+        }
     }
 }
 
