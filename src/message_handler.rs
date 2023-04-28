@@ -20,25 +20,6 @@ impl<T: Debug + Clone> Subscriber<T> {
     }
 }
 
-// impl<T: Debug + Clone> Clone for Subscriber<T> {
-//     fn clone(&self) -> Self {
-//         let x: T = self.subscribed.into();
-//         x.clone();
-//         Self {
-//             subscribed: Mutex::new()
-//         }
-//     //     if let Ok(clone) = self.subscribed.into() {
-//     //         Self {
-//     //             subscribed: Mutex::new(clone.clone()),
-//     //         }
-//     //     } else {
-//     //         Self {
-//     //             subscribed: Mutex::new(None),
-//     //         }
-//     //     }
-//     // }
-// }
-
 impl<T: Debug + Clone> std::fmt::Display for Subscriber<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{:?}", self)

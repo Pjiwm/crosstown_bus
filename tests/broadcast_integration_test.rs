@@ -41,7 +41,7 @@ fn broadcast() -> Result<(), Box<dyn Error>> {
 
     _ = subscriber.subscribe_registered_events(QueueProperties { auto_delete: false, durable: false, use_dead_letter: true });
 
-    let mut subscriber2 = 
+    let mut subscriber2 =
         CrosstownBus::new_broadcast_subscriber::<OrderCreatedEventMessage>("amqp://guest:guest@localhost:5672".to_owned())?;
 
     _ = subscriber2.add_subscription("order_created".to_owned(), Arc::new(EmailSenderHandler));
@@ -49,12 +49,12 @@ fn broadcast() -> Result<(), Box<dyn Error>> {
     _ = subscriber2.subscribe_registered_events(QueueProperties { auto_delete: false, durable: false, use_dead_letter: true });
 
     let mut publisher = CrosstownBus::new_broadcast_publisher("amqp://guest:guest@localhost:5672".to_owned())?;
-    _ = publisher.publish_event("order_created".to_owned(), 
+    _ = publisher.publish_event("order_created".to_owned(),
         OrderCreatedEventMessage {
             order_id: "gtr123".to_owned(),
             product_description: "Electric Guitar".to_owned()
         });
-    _ = publisher.publish_event("order_created".to_owned(), 
+    _ = publisher.publish_event("order_created".to_owned(),
         OrderCreatedEventMessage {
             order_id: "bss001".to_owned(),
             product_description: "Bass".to_owned()
